@@ -6,7 +6,7 @@ from skimage import img_as_float
 import nibabel as nib
 import matplotlib.pylab as plt
 from scipy.ndimage.morphology import binary_dilation, binary_erosion
-from myutils.fibheap import FibonacciHeap
+from modules.myutils.fibheap import FibonacciHeap
 
 def get_neighbours(p, exclude_p=True, shape=None):
     ndim = len(p)

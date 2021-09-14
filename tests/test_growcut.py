@@ -11,7 +11,7 @@ from scipy.ndimage.morphology import binary_dilation, binary_erosion
 from os.path import dirname, join, abspath
 sys.path.append(abspath(join(dirname(__file__),'../modules')))
 
-from growcut_cpu import fastgc
+from modules.growcut_cpu import fastgc
 
 def test_fastgrowcut():
     """
