@@ -41,85 +41,65 @@ def _get_dice(input, target, epsilon=1e-6, weight=None):
     return 2 * (intersect / np.clip(denominator, a_min=epsilon, a_max=None))
 
 def test_fastgrowcut():
-    """
-    # Teeth
-    imgpath = "/home/SENSETIME/shenrui/Dropbox/SenseTime/data/teeth0001.nii.gz"
-    labelpath = "/home/SENSETIME/shenrui/Dropbox/SenseTime/data/teeth0001_label_tri.nii.gz"
-    savepath = "/home/SENSETIME/shenrui/Dropbox/SenseTime/fastgc_python/results"
 
-    img = nib.load(imgpath)
-    imgdata = np.squeeze(img.get_fdata()[120:580, 10:350, 225:226])
-    label = nib.load(labelpath)
-    labeldata = np.squeeze(label.get_fdata()[120:580, 10:350, 225:226])
-    seedsdata = np.zeros(labeldata.shape)
-
-    """
-
-    # Pelvis
-    imgpath = "/data/tianmu/data/dynamic_segmentation/brats2015/train/all/sample_54686_image_norm_crop_resize.mha"
-    labelpath = "/data/tianmu/data/dynamic_segmentation/brats2015/train/all/sample_54686_label_binary_crop_resize.mha"
+    imgpath = "/data/tianmu/data/dynamic_segmentation/brats2015/train/all/sample_35537_image_norm_crop_resize.mha"
+    labelpath = "/data/tianmu/data/dynamic_segmentation/brats2015/train/all/sample_35537_label_binary_crop_resize.mha"
     savepath = "/data/tianmu/data/dynamic_segmentation/brats2015/train/all_fastgc"
 
     img = _itk_read_image_from_file(imgpath)
-    middle_index = img.GetSize()[2] // 2
-    imgdata = _itk_read_array_from_file(imgpath)[middle_index : (middle_index+1), :, :]
     label = _itk_read_image_from_file(labelpath)
-    labeldata = _itk_read_array_from_file(labelpath)[middle_index : (middle_index+1), :, :]
-    seedsdata = np.zeros(labeldata.shape)
+    
+    # middle_index = img.GetSize()[2] // 2
+    # imgdata = _itk_read_array_from_file(imgpath)[middle_index // 2 : (middle_index+1), :, :]    
+    # labeldata = _itk_read_array_from_file(labelpath)[middle_index // 2 : (middle_index+1), :, :]
 
+    imgdata = _itk_read_array_from_file(imgpath)
+    labeldata = _itk_read_array_from_file(labelpath)
+        
     fg_indices = np.where(labeldata == 1)
     bg_indices = np.where(labeldata == 0)
-    num_clicks_fg = 5
-    num_clicks_bg = 5
-    fg_selected = np.random.choice(fg_indices[0].shape[0], num_clicks_fg, replace=False).tolist()
-    bg_selected = np.random.choice(bg_indices[0].shape[0], num_clicks_bg, replace=False).tolist()
+    existing_idx = set()
 
-    for fg in fg_selected:
-        seedsdata[fg_indices[0][fg], fg_indices[1][fg], fg_indices[2][fg]] = 2
-    
-    for bg in bg_selected:
-        seedsdata[bg_indices[0][bg], bg_indices[1][bg], bg_indices[2][bg]] = 1
+    for _ in range(5):
+        num_clicks_fg = 2
+        num_clicks_bg = 3
+        fg_selected = np.random.choice(fg_indices[0].shape[0], num_clicks_fg, replace=False).tolist()
+        bg_selected = np.random.choice(bg_indices[0].shape[0], num_clicks_bg, replace=False).tolist()
 
-    # nlabels = np.unique(labeldata)
-    # for i in nlabels:
-    #     mask = labeldata == i
-    #     mask = binary_erosion(mask, structure=np.ones((1,3,3)))
-    #     mask = binary_erosion(mask, structure=np.ones((1,3,3)))
-    #     mask = binary_erosion(mask, structure=np.ones((1,3,3)))
-    #     mask = binary_erosion(mask, structure=np.ones((1,3,3)))
-    #     mask = binary_erosion(mask, structure=np.ones((1,3,3)))
+        for fg in fg_selected:
+            curr_choice = (fg_indices[0][fg], fg_indices[1][fg], fg_indices[2][fg])
+            if curr_choice not in existing_idx:
+                existing_idx.add(curr_choice)
+        
+        for bg in bg_selected:
+            curr_choice = (bg_indices[0][bg], bg_indices[1][bg], bg_indices[2][bg])
+            if curr_choice not in existing_idx:
+                existing_idx.add(curr_choice)
 
-    #     seedsdata = seedsdata + mask * (i+1)
+        seedsdata = np.zeros(labeldata.shape)
+        for idx in existing_idx:
+            if labeldata[idx] == 1:
+                seedsdata[idx] = 2
+            else:
+                seedsdata[idx] = 1
 
-    start = time.time()
-    distPre, labPre = fastgc(imgdata, seedsdata, newSeg = True, verbose = True)
-    end = time.time()
-    labPre[labPre == 1] = 0
-    labPre[labPre == 2] = 1
-    dice_score = _get_dice(labPre, labeldata, epsilon=1e-6, weight=None)
+        start = time.time()
+        distPre, labPre = fastgc(imgdata, seedsdata, newSeg = True, verbose = True)
+        end = time.time()
+        labPre[labPre == 1] = 0
+        labPre[labPre == 2] = 1
+        dice_score = _get_dice(labPre, labeldata, epsilon=1e-6, weight=None)
 
-    print("time used:", end - start, "seconds")
-    print(f"dice_score = {dice_score}")
+        print("time used:", end - start, "seconds")
+        print(f"dice_score = {dice_score}")
+        n_pos_seed = (seedsdata == 2).sum()
+        n_neg_seed = (seedsdata == 1).sum()
+        print(f"pos_seed = {n_pos_seed}, neg_seed = {n_neg_seed}, total = {len(existing_idx)}")
 
-    """
-    # Teeth
-    nib.save(nib.Nifti1Image(imgdata, img.affine), join(savepath, "original_img_teeth.nii.gz"))
-    nib.save(nib.Nifti1Image(labeldata, img.affine), join(savepath, "original_label_teeth.nii.gz"))
-    nib.save(nib.Nifti1Image(seedsdata, img.affine), join(savepath, "seedsdata_teeth.nii.gz"))
-    nib.save(nib.Nifti1Image(labPre, img.affine), join(savepath, "fast_growcut_results_teeth.nii.gz"))
-    
-    """
-    # Pelvis
-    # nib.save(nib.Nifti1Image(imgdata, img.affine), join(savepath, "original_img_pelvis.nii.gz"))
-    # nib.save(nib.Nifti1Image(labeldata, img.affine), join(savepath, "original_label_pelvis.nii.gz"))
-    # nib.save(nib.Nifti1Image(seedsdata, img.affine), join(savepath, "seedsdata_pelvis.nii.gz"))
-    # nib.save(nib.Nifti1Image(labPre, img.affine), join(savepath, "fast_growcut_results_pelvis.nii.gz"))
-
-
-    _itk_write_array_to_file(imgdata, img, os.path.join(savepath, "sample_54686_image_original.mha"))
-    _itk_write_array_to_file(labeldata, img, os.path.join(savepath, "sample_54686_label_original.mha"))
-    _itk_write_array_to_file(seedsdata, img, os.path.join(savepath, "sample_54686_seed.mha"))
-    _itk_write_array_to_file(labPre, img, os.path.join(savepath, "sample_54686_fastgc.mha"))
+    # _itk_write_array_to_file(imgdata, img, os.path.join(savepath, "sample_35537_image_original.mha"))
+    # _itk_write_array_to_file(labeldata, img, os.path.join(savepath, "sample_35537_label_original.mha"))
+    # _itk_write_array_to_file(seedsdata, img, os.path.join(savepath, "sample_35537_seed.mha"))
+    # _itk_write_array_to_file(labPre, img, os.path.join(savepath, "sample_35537_fastgc.mha"))
 
 
 if __name__ == "__main__":

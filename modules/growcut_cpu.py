@@ -76,8 +76,9 @@ def fastgc(img, seeds, newSeg = True, labPre=None, distPre=None, verbose = True)
                 continue
         # regular dijkstra
         if verbose:
-            print("-----------Dijkastra-----------")
-            print(str(count)+"/"+str(Ntotal),"Current point:", ind, "Distance from seed:", distCrt[ind], "Seed Label:", labCrt[ind])
+            if count % 1000 == 0:
+                print("-----------Dijkastra-----------")
+                print(str(count)+"/"+str(Ntotal),"Current point:", ind, "Distance from seed:", distCrt[ind], "Seed Label:", labCrt[ind])
             count = count + 1
         neighbours = get_neighbours(np.array(pind), exclude_p=True, shape=img.shape)
         for ind in neighbours:
