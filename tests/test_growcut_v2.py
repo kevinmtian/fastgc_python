@@ -49,12 +49,12 @@ def test_fastgrowcut():
     img = _itk_read_image_from_file(imgpath)
     label = _itk_read_image_from_file(labelpath)
     
-    # middle_index = img.GetSize()[2] // 2
-    # imgdata = _itk_read_array_from_file(imgpath)[middle_index // 2 : (middle_index+1), :, :]    
-    # labeldata = _itk_read_array_from_file(labelpath)[middle_index // 2 : (middle_index+1), :, :]
+    middle_index = img.GetSize()[2] // 2
+    imgdata = _itk_read_array_from_file(imgpath)[middle_index // 2 : (middle_index+1), :, :]    
+    labeldata = _itk_read_array_from_file(labelpath)[middle_index // 2 : (middle_index+1), :, :]
 
-    imgdata = _itk_read_array_from_file(imgpath)
-    labeldata = _itk_read_array_from_file(labelpath)
+    # imgdata = _itk_read_array_from_file(imgpath)
+    # labeldata = _itk_read_array_from_file(labelpath)
         
     fg_indices = np.where(labeldata == 1)
     bg_indices = np.where(labeldata == 0)
@@ -63,8 +63,8 @@ def test_fastgrowcut():
     np.random.seed(42)
 
     for _ in range(5):
-        num_clicks_fg = 2
-        num_clicks_bg = 3
+        num_clicks_fg = 2000
+        num_clicks_bg = 3000
         fg_selected = np.random.choice(fg_indices[0].shape[0], num_clicks_fg, replace=False).tolist()
         bg_selected = np.random.choice(bg_indices[0].shape[0], num_clicks_bg, replace=False).tolist()
 
@@ -86,7 +86,7 @@ def test_fastgrowcut():
                 seedsdata[idx] = 1
 
         start = time.time()
-        distPre, labPre = fastgc(imgdata, seedsdata, newSeg = True, verbose = True)
+        distPre, labPre = fastgc(imgdata, seedsdata, newSeg = True, verbose = False)
         end = time.time()
         labPre[labPre == 1] = 0
         labPre[labPre == 2] = 1

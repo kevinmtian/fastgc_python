@@ -76,7 +76,7 @@ def fastgc(img, seeds, newSeg = True, labPre=None, distPre=None, verbose = True)
                 continue
         # regular dijkstra
         if verbose:
-            if count % 10000 == 0:
+            if count % 1000 == 0:
                 print("-----------Dijkastra-----------")
                 print(str(count)+"/"+str(Ntotal),"Current point:", ind, "Distance from seed:", distCrt[ind], "Seed Label:", labCrt[ind])
             count = count + 1
