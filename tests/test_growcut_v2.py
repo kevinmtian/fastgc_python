@@ -60,6 +60,8 @@ def test_fastgrowcut():
     bg_indices = np.where(labeldata == 0)
     existing_idx = set()
 
+    np.random.seed(42)
+
     for _ in range(5):
         num_clicks_fg = 2
         num_clicks_bg = 3
